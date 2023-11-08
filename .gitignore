@@ -2,3 +2,5 @@ data/
 .idea/
 .DS_STORE
 __pycache__/
+*.log
+har.json

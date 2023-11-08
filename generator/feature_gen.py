@@ -4,14 +4,6 @@ import os
 import magic
 import json
 
-def is_json(fname):
-    with open(fname) as f:
-        try:
-            json.load(f)
-            return True
-        except Exception:
-            return False
-
 def recurse_find(curr_path, base_path):
     all_files = []
     for subpath_str in os.listdir(curr_path):
