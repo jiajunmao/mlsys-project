@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 
-from browsermobproxy import Server
+from browsermobproxy import Server, Client
 from selenium import webdriver
 
 def is_json(fname):
@@ -33,16 +33,17 @@ def write_har(har, filename='har.json'):
     json.dump(har, f)
     f.close()
 
-def get_driver_and_proxy(port):
+def get_driver(proxy):
+    options = webdriver.FirefoxOptions()
+    options.proxy = proxy.selenium_proxy()
+    options.add_argument("-headless") 
+    driver = webdriver.Firefox(options=options)
+
+    return driver
+
+def get_proxy(port=8080):
     server = Server("/home/aaronmao/.bin/browsermob-proxy-2.1.4/bin/browsermob-proxy", {"port": port})
     server.start()
     proxy = server.create_proxy()
-
-    profile  = webdriver.FirefoxProfile()
-    options = webdriver.FirefoxOptions()
-    options.proxy = proxy.selenium_proxy()
-    driver = webdriver.Firefox(options=options)
-
-    proxy.new_har("har")
     
-    return driver, proxy, server
+    return proxy, server
