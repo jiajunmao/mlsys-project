@@ -1,4 +1,4 @@
-## mlsys-project
+# mlsys-project
 
-The crawled website asset tar ball can be downloaded at https://minio.naturecraft.world/jiajunm-misc/scrape-result.zip
-
+## Getting started
+Run `download.sh` from the scripts folder **under the scripts** folder. Otherwise the relative path might screw up lol. The script is quite primitive.
