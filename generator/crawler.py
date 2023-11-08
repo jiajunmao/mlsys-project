@@ -4,7 +4,7 @@ from sampler import next_click, next_session, num_clicks
 from gen_types import Event, System
 import random
 
-def process_event(driver: webdriver.Firefox, proxy: Client, event: Event, system: System):
+def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Event, system: System):
     # We check whether this event is beyond mission time
     if event.timestamp > system.mission_time:
         return
@@ -49,4 +49,7 @@ def process_event(driver: webdriver.Firefox, proxy: Client, event: Event, system
         event.set_clicks(new_clicks)
         event.incr_time(next_session_interval)
         
+    # Push the new event into system
     system.push_event(event)
+    # Push the recorded har into system's har buffer
+    system.har_buffer[event.user].append(proxy.har)

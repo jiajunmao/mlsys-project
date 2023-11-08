@@ -31,6 +31,7 @@ class System:
         self.mission_time = mission_time
         self.mq: List[Event] = []
         self.base_path = base_path
+        self.har_buffer = []
         
     def push_event(self, event: Event):
         self.mq.append(event)
@@ -41,3 +42,5 @@ class System:
     def init_mq(self, num_user: int):
         for i in range(0, num_user):
             self.mq.append(Event(i, next_session(), self.base_path, num_clicks()))
+            self.har_buffer.append([])
+        
