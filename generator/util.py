@@ -1,8 +1,10 @@
 import json
 import pandas as pd
+import datetime
 
 from browsermobproxy import Server, Client
 from selenium import webdriver
+from dateutil.parser import parse
 
 def is_json(fname):
     with open(fname) as f:
@@ -12,19 +14,25 @@ def is_json(fname):
         except Exception:
             return False
         
-def parse_har(har):
-    entries = har['log']['entries']
-    
+def parse_har(list_of_har):
     traces = []
-    features = ['url', 'start_time', 'response_code', 'body_size', 'rtt']
-    for req in entries:
-        start_time = req['startedDateTime']
-        url = req['request']['url']
-        response_code = req['response']['status']
-        body_size = req['response']['bodySize']
-        rtt = req['time']
-        
-        traces.append((url, start_time, response_code, body_size, rtt))
+    for har_tup in list_of_har:
+        # TODO: fix this relative time calculation
+        time = har_tup[0]
+        har = har_tup[1]
+        entries = har['log']['entries']
+    
+        features = ['url', 'start_time', 'response_code', 'body_size', 'rtt']
+        for req in entries:
+            # TODO: fix this relative time
+            start_time = parse(req['startedDateTime'])
+            start_time += datetime.timedelta(minutes=time)
+            url = req['request']['url']
+            response_code = req['response']['status']
+            body_size = req['response']['bodySize']
+            rtt = req['time']
+            
+            traces.append((url, start_time, response_code, body_size, rtt))
         
     return pd.DataFrame(traces, columns=features)
 

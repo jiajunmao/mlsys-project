@@ -16,6 +16,9 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
     # Get the current page
     driver.get(event.path)
     
+    # Push the recorded har into system's har buffer
+    system.har_buffer[event.user].append((event.timestamp, proxy.har))
+    
     # Get all the href on the page
     elems = driver.find_elements("xpath", "//a[@href]")
     clickable_links = []
@@ -51,5 +54,3 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         
     # Push the new event into system
     system.push_event(event)
-    # Push the recorded har into system's har buffer
-    system.har_buffer[event.user].append(proxy.har)
