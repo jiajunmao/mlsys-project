@@ -1,9 +1,51 @@
 from selenium import webdriver
 from browsermobproxy import Client
 from sampler import next_click, next_session, num_clicks
+from concurrent.futures import ThreadPoolExecutor
+from typing import List
+from util import get_proxy, get_driver
 from gen_types import Event, System
 import random
 import traceback
+
+def worker(sys: System, drivers: List[webdriver.Firefox], proxy: Client, worker_idx: int):
+    while len(sys.mq) != 0:
+        curr_event = sys.pop_event()
+        # print("Processing event {}".format(curr_event))
+        process_event(drivers[worker_idx], proxy, curr_event, sys)
+        
+def gen_trace(num_user, mission_minutes, num_worker=48):
+    # random_walk_page(driver, "https://cs.uchicago.edu", 5)
+    # har = proxy.har # returns a HAR JSON blob
+    proxy, server = get_proxy(8080)
+    pool = ThreadPoolExecutor(num_worker)
+
+    drivers = []
+    for i in range(0, num_worker):
+        drivers.append(get_driver(proxy))
+        
+    try:
+        sys = System(mission_minutes, "https://cs.uchicago.edu")
+        sys.init_mq(num_user)
+
+        futures = []
+        for worker_idx in range(num_worker):
+            futures.append(pool.submit(worker, sys, drivers, proxy, worker_idx))
+
+        for fut in futures:
+            fut.result()
+    except:
+        traceback.print_exc()
+    finally:
+        for i in range(0, num_worker):
+            drivers[i].quit()
+        server.stop()
+    
+    aggregate_har = []
+    for hars in sys.har_buffer:
+        aggregate_har += hars
+        
+    return aggregate_har, sys
 
 def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Event, system: System):
     try:
@@ -66,5 +108,3 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         # Push the new event into system
         # print("Pushing event {}".format(event))
         system.push_event(event)
-        
-        

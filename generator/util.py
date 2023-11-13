@@ -14,6 +14,16 @@ def is_json(fname):
         except Exception:
             return False
         
+def postprocess_har(aggregate_har):
+    test_pdf = parse_har(aggregate_har)
+    test_pdf.sort_values(by=['start_time'])
+    
+    test_pdf['relative'] = test_pdf.start_time.astype(np.int64) // 10 ** 9
+    test_pdf['relative'] = test_pdf['relative'] - min(test_pdf['relative'])
+    test_pdf = test_pdf.sort_values(by=['relative'])
+    
+    return test_pdf
+
 def parse_har(list_of_har):
     traces = []
     for har_tup in list_of_har:
