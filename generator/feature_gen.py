@@ -3,6 +3,7 @@ import numpy as np
 import os
 import magic
 import json
+from util import is_json
 
 def recurse_find(curr_path, base_path):
     all_files = []
@@ -20,6 +21,9 @@ def recurse_find(curr_path, base_path):
         all_files += child_files
     
     return all_files
+
+def relative_time_window():
+    pass
 
 def gen_feature(site_data_path):
     feature_pd = pd.DataFrame([])

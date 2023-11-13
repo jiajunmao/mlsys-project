@@ -2,7 +2,7 @@ import numpy as np
 
 # Parameters for between "session" access
 def next_session():
-    return np.random.normal(60, 20)
+    return np.random.normal(40, 20)
 
 # Parameters for between clicks
 def next_click():

@@ -32,6 +32,7 @@ class System:
         self.mq: List[Event] = []
         self.base_path = base_path
         self.har_buffer = []
+        self.remaining_user = set()
         
     def push_event(self, event: Event):
         self.mq.append(event)
@@ -43,4 +44,5 @@ class System:
         for i in range(0, num_user):
             self.mq.append(Event(i, next_session(), self.base_path, num_clicks()))
             self.har_buffer.append([])
+            self.remaining_user.add(i)
         
