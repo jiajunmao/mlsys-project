@@ -56,9 +56,15 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
             
             event.set_clicks(new_clicks)
             event.incr_time(next_session_interval)
-    except:
-        traceback.print_exc()
-    finally:
+            
+        # DO NOT put this in finally block as finally will execute after return, causing infinite MQ
         # Push the new event into system
         # print("Pushing event {}".format(event))
         system.push_event(event)
+    except:
+        traceback.print_exc()
+        # Push the new event into system
+        # print("Pushing event {}".format(event))
+        system.push_event(event)
+        
+        
