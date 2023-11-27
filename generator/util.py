@@ -1,6 +1,7 @@
 import json
 import pandas as pd
 import datetime
+import numpy as np
 
 from browsermobproxy import Server, Client
 from selenium import webdriver
@@ -34,15 +35,19 @@ def parse_har(list_of_har):
     
         features = ['url', 'start_time', 'response_code', 'body_size', 'rtt']
         for req in entries:
-            # TODO: fix this relative time
-            start_time = parse(req['startedDateTime'])
-            start_time += datetime.timedelta(minutes=time)
-            url = req['request']['url']
-            response_code = req['response']['status']
-            body_size = req['response']['bodySize']
-            rtt = req['time']
-            
-            traces.append((url, start_time, response_code, body_size, rtt))
+            try:
+                # TODO: fix this relative time
+                start_time = parse(req['startedDateTime'])
+                start_time += datetime.timedelta(minutes=time)
+                url = req['request']['url']
+                response_code = req['response']['status']
+                body_size = req['response']['bodySize']
+                rtt = req['time']
+                
+                traces.append((url, start_time, response_code, body_size, rtt))
+            except:
+                # Ignore this trace
+                pass
         
     return pd.DataFrame(traces, columns=features)
 
@@ -61,7 +66,9 @@ def get_driver(proxy):
 
 def get_proxy(port=8080):
     server = Server("/home/aaronmao/.bin/browsermob-proxy-2.1.4/bin/browsermob-proxy", {"port": port})
+    print("Starting proxy")
     server.start()
+    print("Proxy started")
     proxy = server.create_proxy()
     
     return proxy, server

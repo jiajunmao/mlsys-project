@@ -5,3 +5,4 @@ __pycache__/
 *.log
 har.json
 *.pandas
+*.har

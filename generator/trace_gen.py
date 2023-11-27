@@ -7,6 +7,16 @@ from util import get_proxy, get_driver
 from gen_types import Event, System
 import random
 import traceback
+import time
+
+def watchdog(sys: System):
+    last_time = -1
+    while len(sys.mq) != 0:
+        ts = time.time()
+        if int(ts) % 60 == 0 and int(ts) // 60 != last_time:
+            last_time = int(ts) // 60
+            print("Time at MQ tip {}".format(sys.mq[0].timestamp))
+            print("{} events left in MQ".format(len(sys.mq)))
 
 def worker(sys: System, drivers: List[webdriver.Firefox], proxy: Client, worker_idx: int):
     while len(sys.mq) != 0:
@@ -14,24 +24,29 @@ def worker(sys: System, drivers: List[webdriver.Firefox], proxy: Client, worker_
         # print("Processing event {}".format(curr_event))
         process_event(drivers[worker_idx], proxy, curr_event, sys)
         
-def gen_trace(num_user, mission_minutes, num_worker=48):
+def gen_trace(url, num_user, mission_minutes, num_worker=48):
     # random_walk_page(driver, "https://cs.uchicago.edu", 5)
     # har = proxy.har # returns a HAR JSON blob
-    proxy, server = get_proxy(8080)
-    pool = ThreadPoolExecutor(num_worker)
+    proxy, server = get_proxy(8100)
+    pool = ThreadPoolExecutor(num_worker+1)
 
     drivers = []
     for i in range(0, num_worker):
         drivers.append(get_driver(proxy))
         
     try:
-        sys = System(mission_minutes, "https://cs.uchicago.edu")
+        sys = System(mission_minutes, url)
         sys.init_mq(num_user)
+        
+        print("Initialized, generating trace")
 
         futures = []
         for worker_idx in range(num_worker):
             futures.append(pool.submit(worker, sys, drivers, proxy, worker_idx))
-
+        
+        # Append the watch dog thread
+        futures.append(pool.submit(watchdog, sys))
+        
         for fut in futures:
             fut.result()
     except:
@@ -58,7 +73,7 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         # Set the har
         proxy.new_har("user-{}".format(event.user))
         
-        # print("Visiting page {}".format(event.path))
+        print("Visiting page {}".format(event.path))
         # Get the current page
         driver.get(event.path)
         
@@ -67,11 +82,17 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         
         # Get all the href on the page
         elems = driver.find_elements("xpath", "//a[@href]")
-        clickable_links = []
+        # Dedup links
+        clickable_links = set()
         for elem in elems:
-            clickable_links.append(elem.get_attribute("href"))
+            clickable_links.add(elem.get_attribute("href"))
         
-        # print("There are {} clickable links on this page".format(len(clickable_links)))
+        # Remove the current path
+        clickable_links.remove(event.path)
+        clickable_links = list(clickable_links)
+        
+        print("There are {} clickable links on this page".format(len(clickable_links)))
+        print(clickable_links)
         # We "choose" randomly from the list of clickable links
         # 1. we check whether there is any clicks left for this 
         if event.remaining_click > 0:
@@ -79,7 +100,7 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
             while True:
                 rand_idx = random.randint(0, len(clickable_links)-1)
                 next_path = clickable_links[rand_idx]
-                # print("Choosing {} idx with url {}".format(rand_idx, clickable_links[rand_idx]))
+                print("Choosing {} idx with url {}".format(rand_idx, clickable_links[rand_idx]))
                 
                 if system.base_path in next_path:
                     break

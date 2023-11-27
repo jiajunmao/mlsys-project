@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import List
+from typing import List, Tuple
 
 color_palette = [
     'royalblue',
@@ -28,15 +28,18 @@ def plot_frequency(ax, data_frame: pd.DataFrame, plot_url: str, mission_seconds:
     ax.plot(plot_pdf['relative'], plot_pdf['count'], label="Freq [{}]".format(plot_url), alpha=0.1, color=color)
     ax.plot(plot_pdf['relative'], plot_pdf['count_rolling'], label="Freq (4m rolling) [{}]".format(plot_url), color=color)
     ax.legend(loc='upper right')
+    
+    return plot_pdf
 
-def plot_frequencies(data_frame: pd.DataFrame, plot_urls: List[str], mission_seconds: int, rolling_window_seconds: int = 240, color_palette: List[str] = color_palette):
+def plot_frequencies(data_frame: pd.DataFrame, plot_urls: List[str], mission_seconds: int, rolling_window_seconds: int = 240, xylim: Tuple[int] = (-1, 10), color_palette: List[str] = color_palette):
     fig, ax = plt.subplots(1, 1)
     fig.set_size_inches(18, 8)
     fig.set_dpi(600)
     
     index = 0
+    freq_pdfs = []
     for plot_url in plot_urls:
-        plot_frequency(
+        freq = plot_frequency(
             ax, 
             data_frame, 
             plot_url, 
@@ -45,10 +48,14 @@ def plot_frequencies(data_frame: pd.DataFrame, plot_urls: List[str], mission_sec
             rolling_window_seconds
         )
         
+        freq_pdfs.append(freq)
+        
         index += 1
         
     plt.xlabel("Mission Time (sec)")
     plt.ylabel("Frequency")
-    plt.ylim(0, 3)
-    plt.xlim(0, mission_seconds)
+    plt.ylim(0, xylim[1])
+    plt.xlim(0, mission_seconds if xylim[0] == -1 else xylim[0])
     plt.title("Frequency of Access")
+    
+    return freq_pdfs
