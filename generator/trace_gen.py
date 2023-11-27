@@ -57,10 +57,13 @@ def gen_trace(url, num_user, mission_minutes, num_worker=48):
             drivers[i].quit()
         server.stop()
     
+    print("Done, aggregating har")
+    
     aggregate_har = []
     for hars in sys.har_buffer:
         aggregate_har += hars
         
+    print("Har aggregated")
     return aggregate_har, sys
 
 def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Event, system: System):
@@ -74,7 +77,7 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         # Set the har
         proxy.new_har("user-{}".format(event.user))
         
-        print("Visiting page {}".format(event.path))
+        # print("Visiting page {}".format(event.path))
         # Get the current page
         driver.get(event.path)
         
@@ -109,7 +112,7 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
             while True:
                 rand_idx = random.randint(0, len(clickable_links)-1)
                 next_path = clickable_links[rand_idx]
-                print("Choosing {} idx with url {}".format(rand_idx, clickable_links[rand_idx]))
+                # print("Choosing {} idx with url {}".format(rand_idx, clickable_links[rand_idx]))
                 
                 if system.base_path in next_path:
                     break

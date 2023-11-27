@@ -15,7 +15,7 @@ def is_json(fname):
         except Exception:
             return False
         
-def postprocess_har(aggregate_har):
+def postprocess_har(aggregate_har, base_path=None):
     test_pdf = parse_har(aggregate_har)
     test_pdf.sort_values(by=['start_time'])
     
@@ -23,6 +23,8 @@ def postprocess_har(aggregate_har):
     test_pdf['relative'] = test_pdf['relative'] - min(test_pdf['relative'])
     test_pdf = test_pdf.sort_values(by=['relative'])
     
+    if base_path is not None:
+        test_pdf = test_pdf[test_pdf["url"].str.contains(base_path)]
     return test_pdf
 
 def parse_har(list_of_har):
@@ -60,6 +62,7 @@ def get_driver(proxy):
     options = webdriver.FirefoxOptions()
     options.proxy = proxy.selenium_proxy()
     options.add_argument("-headless") 
+    options.set_preference("privacy.trackingprotection.enabled", False)
     driver = webdriver.Firefox(options=options)
 
     return driver

@@ -13,7 +13,7 @@ mission_seconds = mission_hour*60*60
 
 # ---------------------
 
-base_path = "cc.gatech.edu"
+base_path = "cs.uchicago.edu"
 
 aggregate_har, sys = gen_trace("https://{}".format(base_path), num_user, mission_minutes, num_worker)
 
