@@ -21,7 +21,7 @@ def watchdog(sys: System):
 def worker(sys: System, drivers: List[webdriver.Firefox], proxy: Client, worker_idx: int):
     while len(sys.mq) != 0:
         curr_event = sys.pop_event()
-        # print("Processing event {}".format(curr_event))
+        print("Processing event {}".format(curr_event))
         process_event(drivers[worker_idx], proxy, curr_event, sys)
         
 def gen_trace(url, num_user, mission_minutes, num_worker=48):
@@ -32,6 +32,7 @@ def gen_trace(url, num_user, mission_minutes, num_worker=48):
 
     drivers = []
     for i in range(0, num_worker):
+        print("Starting driver {}".format(i))
         drivers.append(get_driver(proxy))
         
     try:
@@ -88,9 +89,17 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
             clickable_links.add(elem.get_attribute("href"))
         
         # Remove the current path
-        clickable_links.remove(event.path)
-        clickable_links = list(clickable_links)
+        clickable_links.discard(event.path)
+        clickable_links.discard(event.path + "/")
+        temp_links = []
+        for link in clickable_links:
+            if system.base_path in link:
+                temp_links.append(link)
+            else:
+                print("{} does not contain base path, removing".format(link))
         
+        clickable_links = temp_links
+            
         print("There are {} clickable links on this page".format(len(clickable_links)))
         print(clickable_links)
         # We "choose" randomly from the list of clickable links
