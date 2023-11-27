@@ -31,7 +31,7 @@ def plot_frequency(ax, data_frame: pd.DataFrame, plot_url: str, mission_seconds:
     
     return plot_pdf
 
-def plot_frequencies(data_frame: pd.DataFrame, plot_urls: List[str], mission_seconds: int, rolling_window_seconds: int = 240, xylim: Tuple[int] = (-1, 10), color_palette: List[str] = color_palette):
+def plot_frequencies(data_frame: pd.DataFrame, plot_urls: List[str], mission_seconds: int, rolling_window_seconds: int = 240, xlim: Tuple[int] = (-1,-1), ylim: Tuple[int] = (0, 10), color_palette: List[str] = color_palette):
     fig, ax = plt.subplots(1, 1)
     fig.set_size_inches(18, 8)
     fig.set_dpi(600)
@@ -54,8 +54,8 @@ def plot_frequencies(data_frame: pd.DataFrame, plot_urls: List[str], mission_sec
         
     plt.xlabel("Mission Time (sec)")
     plt.ylabel("Frequency")
-    plt.ylim(0, xylim[1])
-    plt.xlim(0, mission_seconds if xylim[0] == -1 else xylim[0])
+    plt.ylim(ylim)
+    plt.xlim((0, mission_seconds) if xlim [0] == -1 else xlim)
     plt.title("Frequency of Access")
     
     return freq_pdfs
