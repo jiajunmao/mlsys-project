@@ -4,7 +4,7 @@ from util import postprocess_har
 
 # ---------------------
 num_worker = 24
-num_user = 600
+num_user = 800
 mission_hour = 6
 # ---------------------
 

@@ -4,8 +4,8 @@ from util import postprocess_har
 
 # ---------------------
 num_worker = 12
-num_user = 500
-mission_hour = 3
+num_user = 600
+mission_hour = 12
 # ---------------------
 
 mission_minutes = mission_hour*60
