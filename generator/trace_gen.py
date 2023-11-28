@@ -8,6 +8,7 @@ from gen_types import Event, System
 import random
 import traceback
 import time
+import pickle
 
 def watchdog(sys: System):
     last_time = -1
@@ -17,14 +18,18 @@ def watchdog(sys: System):
             last_time = int(ts) // 60
             print("Time at MQ tip {}".format(sys.mq[0].timestamp))
             print("{} events left in MQ".format(len(sys.mq)))
+            
+            f = open("user_{}_hour_{}_{}.har.checkpoint".format(sys.num_user, sys.mission_time//60, sys.base_path), "wb")
+            pickle.dump(sys.har_buffer, f)
+            f.close()
 
 def worker(sys: System, drivers: List[webdriver.Firefox], proxy: Client, worker_idx: int):
     while len(sys.mq) != 0:
         curr_event = sys.pop_event()
-        print("Processing event {}".format(curr_event))
+        # print("Processing event {}".format(curr_event))
         process_event(drivers[worker_idx], proxy, curr_event, sys)
         
-def gen_trace(url, num_user, mission_minutes, num_worker=48):
+def gen_trace(base_path, num_user, mission_minutes, num_worker=48):
     # random_walk_page(driver, "https://cs.uchicago.edu", 5)
     # har = proxy.har # returns a HAR JSON blob
     proxy, server = get_proxy(8100)
@@ -36,7 +41,7 @@ def gen_trace(url, num_user, mission_minutes, num_worker=48):
         drivers.append(get_driver(proxy))
         
     try:
-        sys = System(mission_minutes, url)
+        sys = System(mission_minutes, base_path)
         sys.init_mq(num_user)
         
         print("Initialized, generating trace")
@@ -89,7 +94,10 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         # Dedup links
         clickable_links = set()
         for elem in elems:
-            clickable_links.add(elem.get_attribute("href"))
+            try:
+                clickable_links.add(elem.get_attribute("href"))
+            except:
+                pass
         
         # Remove the current path
         clickable_links.discard(event.path)
@@ -98,24 +106,27 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         for link in clickable_links:
             if system.base_path in link:
                 temp_links.append(link)
-            else:
-                print("{} does not contain base path, removing".format(link))
         
         clickable_links = temp_links
             
-        print("There are {} clickable links on this page".format(len(clickable_links)))
-        print(clickable_links)
+        # print("There are {} clickable links on this page".format(len(clickable_links)))
+        # print(clickable_links)
         # We "choose" randomly from the list of clickable links
         # 1. we check whether there is any clicks left for this 
-        if event.remaining_click > 0:
+        if event.remaining_click > 0 and len(clickable_links) > 0:
             # We get the next path
+            tries = 0
             while True:
                 rand_idx = random.randint(0, len(clickable_links)-1)
                 next_path = clickable_links[rand_idx]
                 # print("Choosing {} idx with url {}".format(rand_idx, clickable_links[rand_idx]))
                 
+                tries += 1
+                
                 if system.base_path in next_path:
                     break
+                elif tries > 20:
+                    raise Exception("Cannot find a valid path")
             
             # We get time until next click
             next_click_interval = next_click()

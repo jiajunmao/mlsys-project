@@ -6,3 +6,4 @@ __pycache__/
 har.json
 *.pandas
 *.har
+*.checkpoint

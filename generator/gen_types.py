@@ -33,6 +33,7 @@ class System:
         self.base_path = base_path
         self.har_buffer = []
         self.remaining_user = set()
+        self.num_user = -1
         
     def push_event(self, event: Event):
         self.mq.append(event)
@@ -41,8 +42,9 @@ class System:
         return self.mq.pop(0)
     
     def init_mq(self, num_user: int):
+        self.num_user = num_user
         for i in range(0, num_user):
-            self.mq.append(Event(i, next_session(), self.base_path, num_clicks()))
+            self.mq.append(Event(i, next_session(), "https://{}".format(self.base_path), num_clicks()))
             self.har_buffer.append([])
             self.remaining_user.add(i)
         
