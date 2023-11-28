@@ -3,9 +3,9 @@ from trace_gen import gen_trace
 from util import postprocess_har
 
 # ---------------------
-num_worker = 20
-num_user = 200
-mission_hour = 4
+num_worker = 24
+num_user = 600
+mission_hour = 6
 # ---------------------
 
 mission_minutes = mission_hour*60

@@ -85,7 +85,15 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         # print("Visiting page {}".format(event.path))
         # Get the current page
         driver.get(event.path)
-        
+    except:
+        # This means that the driver cannot get the page, usually means that the link is not a webpage
+        # We then return to the previous webpage, and retry for this event (do not increment time)
+        # NOTE: should we increment time?
+        event.set_path("https://{}".format(system.base_path))
+        system.push_event(event)
+        return
+    
+    try:
         # Push the recorded har into system's har buffer
         system.har_buffer[event.user].append((event.timestamp, proxy.har))
         
@@ -112,8 +120,15 @@ def process_event(driver: webdriver.Firefox, proxy: webdriver.Proxy, event: Even
         # print("There are {} clickable links on this page".format(len(clickable_links)))
         # print(clickable_links)
         # We "choose" randomly from the list of clickable links
-        # 1. we check whether there is any clicks left for this 
-        if event.remaining_click > 0 and len(clickable_links) > 0:
+        # 1. we check whether there is any clicks left for this
+        if len(clickable_links) == 0:
+            # This means that this page has no out going links. We return the home page
+            # We also do not increment time, but should we?
+            event.set_path("https://{}".format(system.base_path))
+            system.push_event(event)
+            return
+
+        if event.remaining_click > 0:
             # We get the next path
             tries = 0
             while True:
