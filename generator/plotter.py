@@ -8,7 +8,12 @@ color_palette = [
     'orange',
     'mediumseagreen',
     'mediumorchid',
-    'orangered'
+    'orangered',
+    "slategray",
+    "lightpink",
+    "lightsalmon",
+    "olive",
+    "aqua"
 ]
 
 # The input data_frame must have column 'relative' and 'url', where relative in the request's integer second from the start
@@ -44,7 +49,7 @@ def plot_frequencies(data_frame: pd.DataFrame, plot_urls: List[str], mission_sec
             data_frame, 
             plot_url, 
             mission_seconds, 
-            color_palette[index],
+            color_palette[index % len(color_palette)],
             rolling_window_seconds
         )
         
