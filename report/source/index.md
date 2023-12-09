@@ -70,3 +70,13 @@ L=MSE(y, \hat{y})+
 $$
 Essentially, if **any** of the output value is negative, we penalize the model hard. This loss design proves to work well during training.
 
+#### Training
+We select 3 asset access frequency as the training data for the model, which consists to about 60,000 data points. We train the aforementioned LSTM model for 100 epochs and reached a loss value of 0.00045285.
+
+LOSS FUNCTION GRAPH
+
+We then qualitatively examine the model quality by inferring later data given previous ground truth, and we see that our trianed model is able to output correct predictions
+
+PREDICTION GRAPHS
+
+

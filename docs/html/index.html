@@ -55,6 +55,7 @@
 </li>
 <li><a class="reference internal" href="#model-training">Model Training</a><ul>
 <li><a class="reference internal" href="#loss-function-design">Loss Function Design</a></li>
+<li><a class="reference internal" href="#training">Training</a></li>
 </ul>
 </li>
 </ul>
@@ -156,6 +157,13 @@ L=MSE(y, \hat{y})+
 \end{cases}
 $$
 Essentially, if <strong>any</strong> of the output value is negative, we penalize the model hard. This loss design proves to work well during training.</p>
+</section>
+<section id="training">
+<h4>Training<a class="headerlink" href="#training" title="Link to this heading"></a></h4>
+<p>We select 3 asset access frequency as the training data for the model, which consists to about 60,000 data points. We train the aforementioned LSTM model for 100 epochs and reached a loss value of 0.00045285.</p>
+<p>LOSS FUNCTION GRAPH</p>
+<p>We then qualitatively examine the model quality by inferring later data given previous ground truth, and we see that our trianed model is able to output correct predictions</p>
+<p>PREDICTION GRAPHS</p>
 </section>
 </section>
 </section>
