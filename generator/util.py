@@ -75,3 +75,15 @@ def get_proxy(port=8080):
     proxy = server.create_proxy()
     
     return proxy, server
+def download(url, path):
+    http_pool = urllib3.PoolManager()
+    request = http_pool.request('GET', url, preload_content=False)
+    
+    # Continue to write to the local file
+    with open(path, 'wb') as out:
+        while True:
+            data = request.read(256)
+            if not data:
+                break
+            out.write(data)
+            
