@@ -47,28 +47,27 @@
               <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">Document for Predicative Eviction for CDN Asset</a><ul>
 <li><a class="reference internal" href="#introduction">1. Introduction</a></li>
-<li><a class="reference internal" href="#related-works">2. Related Works</a></li>
-<li><a class="reference internal" href="#least-likely-used-eviction">3. Least Likely Used Eviction</a></li>
-<li><a class="reference internal" href="#methodology">4. Methodology</a><ul>
-<li><a class="reference internal" href="#trace-generation">4.1 Trace Generation</a><ul>
-<li><a class="reference internal" href="#user-access-pattern">4.1.1 User Access Pattern</a></li>
+<li><a class="reference internal" href="#first-lesser-likely-used-eviction">2. First Lesser Likely Used Eviction</a></li>
+<li><a class="reference internal" href="#methodology">1. Methodology</a><ul>
+<li><a class="reference internal" href="#trace-generation">3.1 Trace Generation</a><ul>
+<li><a class="reference internal" href="#user-access-pattern">3.1.1 User Access Pattern</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#model-training">4.2 Model Training</a><ul>
-<li><a class="reference internal" href="#loss-function-design">4.2.1 Loss Function Design</a></li>
-<li><a class="reference internal" href="#training">4.2.2 Training</a></li>
+<li><a class="reference internal" href="#model-training">3.2 Model Training</a><ul>
+<li><a class="reference internal" href="#loss-function-design">3.2.1 Loss Function Design</a></li>
+<li><a class="reference internal" href="#training">3.2.2 Training</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#cdn-simulation">4.3 CDN Simulation</a><ul>
-<li><a class="reference internal" href="#architecture">4.3.1 Architecture</a></li>
-<li><a class="reference internal" href="#implementation-of-lru">4.3.2 Implementation of LRU</a></li>
-<li><a class="reference internal" href="#implementation-of-proposed-llu">4.3.3 Implementation of proposed LLU</a></li>
+<li><a class="reference internal" href="#cdn-simulation">3.3 CDN Simulation</a><ul>
+<li><a class="reference internal" href="#architecture">3.3.1 Architecture</a></li>
+<li><a class="reference internal" href="#implementation-of-lru">3.3.2 Implementation of LRU</a></li>
+<li><a class="reference internal" href="#implementation-of-proposed-fllu">3.3.3 Implementation of proposed FLLU</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#conclusion">5. Conclusion</a></li>
-<li><a class="reference internal" href="#future-work">6. Future Work</a></li>
+<li><a class="reference internal" href="#analysis">4. Analysis</a></li>
+<li><a class="reference internal" href="#future-work">5. Future Work</a></li>
 </ul>
 </li>
 </ul>
@@ -104,20 +103,22 @@
 <p>Content Delivery Network (CDN) is a widely used technique to speed up page load, distribute data center traffic load to edge servers, and improve user experience browsing the web. However, like any other caches in the world, CDN can only be truly effective if the hit ratio is reasonably high. Multiple cache eviction policies are used in modern CDNs ranging from the traditional LRU to zoned-LRU with privileged zones. However, all of these algorithms are retrospective. For example, LRU uses a doubly-linked hashmap to keep track of the <strong>least recently</strong> used cache to evict.</p>
 <p>In this project, we experiment with the idea of <strong>predicative eviction</strong>. The method uses time series analysis on the past access traces to predict future access patterns before evicting them from the cache.</p>
 </section>
-<section id="related-works">
-<h2>2. Related Works<a class="headerlink" href="#related-works" title="Link to this heading"></a></h2>
-<p>A few attempts have been made at this topic. <strong>FILL</strong></p>
-</section>
-<section id="least-likely-used-eviction">
-<h2>3. Least Likely Used Eviction<a class="headerlink" href="#least-likely-used-eviction" title="Link to this heading"></a></h2>
-<p>At the core of the predicative eviction CDN is the LLU, which is a really simple idea. LRU evicts the asset that is <strong>least recently</strong> used. On the other hand, LLU evicts the asset that is <strong>least likely to be used in the future</strong>. This aims to eliminate the problem that there is some possibility that a least recently used cache will be used in the near future while not least recently used will not.</p>
-<p>We use LSTM to infer the access pattern of the next 2.5 minutes given the the access pattern in the past 5 minutes. We then compare the access pattern across all the cached asset, and then evict the asset with the lowest probability, regardless whether that asset has been recently used or not. We also multiply the probability with the size of the asset such that</p>
+<section id="first-lesser-likely-used-eviction">
+<h2>2. First Lesser Likely Used Eviction<a class="headerlink" href="#first-lesser-likely-used-eviction" title="Link to this heading"></a></h2>
+<p>At the core of the predicative eviction CDN is the FLLU, which is a really simple idea. LRU evicts the asset that is <strong>least recently</strong> used. On the other hand, FLLU evicts the assets that is <strong>lesser likely to be used in the future</strong>. This aims to eliminate the problem that there is some possibility that a least recently used cache will be used in the near future while not least recently used will not.</p>
+<p>We use LSTM to infer the access pattern of the next 2.5 minutes given the the access pattern in the past 5 minutes. We then start looking at cached assets one by one. We will evict the first asset encountered that has a summed future probability score of less than a threshold. The algorithm is described in the following pseudo code section.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">while</span> <span class="n">cdn_size</span> <span class="o">+</span> <span class="n">new_asset_size</span> <span class="o">&gt;</span> <span class="n">cdn_capacity</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">asset</span> <span class="ow">in</span> <span class="n">cached_asset</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">future_prob</span><span class="p">(</span><span class="n">asset</span><span class="p">))</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="n">evict</span><span class="p">(</span><span class="n">asset</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="methodology">
-<h2>4. Methodology<a class="headerlink" href="#methodology" title="Link to this heading"></a></h2>
+<h2>1. Methodology<a class="headerlink" href="#methodology" title="Link to this heading"></a></h2>
 <p>The project efforts are separated into three parts with their implementation details explained below.</p>
 <section id="trace-generation">
-<h3>4.1 Trace Generation<a class="headerlink" href="#trace-generation" title="Link to this heading"></a></h3>
+<h3>3.1 Trace Generation<a class="headerlink" href="#trace-generation" title="Link to this heading"></a></h3>
 <p>We have realized from the start of the project that real-world CDN traces are hard to obtain if not possible. Therefore, we decided that we are going to complete the project on synthetic traces. Three tech stacks are used to capture network access traces</p>
 <blockquote>
 <div><ul class="simple">
@@ -145,20 +146,20 @@
 </div>
 <p>We can then initialize the number worker to be something appropriate. <code class="docutils literal notranslate"><span class="pre">event</span></code> contains a few critical attributes such as the url that we want to visit, the current simulated timestamp, etc. It is important to note that the time is simulation not, <strong>not</strong> wall time. Number of user controls how many concurrent user access we are simulating.</p>
 <section id="user-access-pattern">
-<h4>4.1.1 User Access Pattern<a class="headerlink" href="#user-access-pattern" title="Link to this heading"></a></h4>
+<h4>3.1.1 User Access Pattern<a class="headerlink" href="#user-access-pattern" title="Link to this heading"></a></h4>
 <p>We also need to assume some access patterns for our users. Due to project time constraint, we can only manage to simulate simple user behaviors. The following statement defines the user behavior.</p>
 <p>User will start a browsing session. A browsing session consists of a series of bursty clicks. After each click, the user needs sometime to read through the newly loaded website. The intervals between the bursty clicks are modeled by <span class="math notranslate nohighlight">\(\mathcal{N}(1m,0.5m)\)</span>. The number of clicks in a session is modeled by <span class="math notranslate nohighlight">\(\text{rand}(1,10]\)</span>. After a each browsing session, the user will take a rest before starting the next browser session. The rest interval is modeled by <span class="math notranslate nohighlight">\(\mathcal{N}(40m,20m)\)</span>. A single user will continue to engage in these browsing sessions until the simulation mission time is reached (such as 5 hours).</p>
 <p>With the <code class="docutils literal notranslate"><span class="pre">num_user</span></code> parameter properly configured, we can then simulate concurrent user access behaviors with the above definition defining the actions of individual users. However, do note that this access pattern is incredibly naive and primitive, and if we want more realistic traces, we probably should consider using more complex rules and distributions than simple normal.</p>
 </section>
 </section>
 <section id="model-training">
-<h3>4.2 Model Training<a class="headerlink" href="#model-training" title="Link to this heading"></a></h3>
+<h3>3.2 Model Training<a class="headerlink" href="#model-training" title="Link to this heading"></a></h3>
 <p>After the trace is generated, we perform a rolling window smoothing on the access frequency of each asset such that a recurrent model can learn meaningful weights than just outputting 0s. A rolling window size of 400 is used, and a selected sample of assets will have their smoothed access frequency shown in the graph below. The semi-transparent histographs in the background shows the actual non-smoothed access frequency while the the line shows smoothed frequency.</p>
-<p><strong>PUT GRAPH HERE</strong></p>
+<a class="reference internal image-reference" href="_images/frequency.png"><img alt="Alternative tex" src="_images/frequency.png" style="width: 800px;" /></a>
 <p>When using LSTM to predict time series, we must be mindful of the input and output window of the model. For example, if we let the LSTM uses the previous <span class="math notranslate nohighlight">\(x\)</span> data points to predict <span class="math notranslate nohighlight">\(1\)</span> following data point, the model will always tend to just return the value of the last data point, as that makes sense. Therefore, in order to let LSTM capture longer-range relations in the smoothed data, we decided that our LSTM model will use the previous 300 data points to predict the next 150 data points, which translates to using the access pattern in the previous 5 minutes to predict the access pattern in the following 2.5 minutes.</p>
 <p>Our model consists of two LSTM networks concatenated together to capture the temporal correlation in the data, and a single layer MLP with hidden size of 50, and a output layer of 150 as mentioned above. Since we wish the model to output a similar prediction compared to the ground truth data, MSE loss function is used.</p>
 <section id="loss-function-design">
-<h4>4.2.1 Loss Function Design<a class="headerlink" href="#loss-function-design" title="Link to this heading"></a></h4>
+<h4>3.2.1 Loss Function Design<a class="headerlink" href="#loss-function-design" title="Link to this heading"></a></h4>
 <p>Through training the model we have discovered that sometimes the model have the tendency to output slightly negative values for assets that have a smoothed access frequency that is closer to 0, due to MSE loss’s property of being un-signed. Therefore, we have appended a new term to the loss function as follows</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}L=MSE(y, \hat{y})+
@@ -169,37 +170,47 @@
 <p>Essentially, if <strong>any</strong> of the output value is negative, we penalize the model hard. This loss design proves to work well during training.</p>
 </section>
 <section id="training">
-<h4>4.2.2 Training<a class="headerlink" href="#training" title="Link to this heading"></a></h4>
+<h4>3.2.2 Training<a class="headerlink" href="#training" title="Link to this heading"></a></h4>
 <p>We select 3 asset access frequency as the training data for the model, which consists to about 60,000 data points. We train the aforementioned LSTM model for 100 epochs and reached a loss value of 0.00045285.</p>
-<p>LOSS FUNCTION GRAPH</p>
+<a class="reference internal image-reference" href="_images/loss.png"><img alt="Alternative tex" src="_images/loss.png" style="width: 400px;" /></a>
 <p>We then qualitatively examine the model quality by inferring later data given previous ground truth, and we see that our trianed model is able to output correct predictions</p>
-<p>PREDICTION GRAPHS</p>
+<a class="reference internal image-reference" href="_images/pred1.png"><img alt="Alternative tex" src="_images/pred1.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="_images/pred2.png"><img alt="Alternative text" src="_images/pred2.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="_images/pred3.png"><img alt="Alternative tex" src="_images/pred3.png" style="width: 800px;" /></a>
 </section>
 </section>
 <section id="cdn-simulation">
-<h3>4.3 CDN Simulation<a class="headerlink" href="#cdn-simulation" title="Link to this heading"></a></h3>
+<h3>3.3 CDN Simulation<a class="headerlink" href="#cdn-simulation" title="Link to this heading"></a></h3>
 <section id="architecture">
-<h4>4.3.1 Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h4>
-<p>We initialized a CDN simulation data structure with a size of 100 Mb and a hashmap to contain those assessed website assets. The total number of access requests and number of hits are stored for later hit rate calculation.</p>
+<h4>3.3.1 Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h4>
+<p>We initialized a simulated CDN cache with a size of 100 Mb and a hashmap to contain those assessed website assets. The total number of access requests and number of hits are stored for later hit rate calculation.</p>
 </section>
 <section id="implementation-of-lru">
-<h4>4.3.2 Implementation of LRU<a class="headerlink" href="#implementation-of-lru" title="Link to this heading"></a></h4>
-<p>We first use <code class="docutils literal notranslate"><span class="pre">user_600_hour_6_cs.uchicago.edu.har</span></code> as a test dataset to measure the CDN hit rate. This dataset starts at <code class="docutils literal notranslate"><span class="pre">2023-11-27</span> <span class="pre">21:27:41</span></code>, and we set it to end at <code class="docutils literal notranslate"><span class="pre">2023-11-27</span> <span class="pre">23:27:41</span></code>. In the case without prediction for cache eviction, we use the least recent use policy to evict the least recently accessed assets in the history.</p>
+<h4>3.3.2 Implementation of LRU<a class="headerlink" href="#implementation-of-lru" title="Link to this heading"></a></h4>
+<p>We first use <code class="docutils literal notranslate"><span class="pre">user_600_hour_6_cs.uchicago.edu.har</span></code> as a test dataset to measure the CDN hit rate. This dataset starts at <code class="docutils literal notranslate"><span class="pre">2023-11-27</span> <span class="pre">21:27:41</span></code>, and we set it to end at <code class="docutils literal notranslate"><span class="pre">2023-11-27</span> <span class="pre">23:27:41</span></code>. In the case of LRU, the least recently accessed assets in the history is evicted when the cache is full.</p>
 <p>The hit rate in the end is around <strong>84.30%</strong></p>
 </section>
-<section id="implementation-of-proposed-llu">
-<h4>4.3.3 Implementation of proposed LLU<a class="headerlink" href="#implementation-of-proposed-llu" title="Link to this heading"></a></h4>
-<p>In the case of LLU eviction, the CDN will check the possibility of being used in the future for all the assets cached inside this CDN and evict the least likely to be used assets. Specifically, in the eviction stage, the fetch function first checks the current time as a window end time, and the window lasts for 150 seconds. Then, we will extract the 150 seconds before the window end time in the history data we captured; in this case, it is from user_600_hour_6_cs.uchicago.edu.har. Based on the 150-second history, we will predict the usage of this asset in the future 150 seconds. If the sum of all the prediction usage in the next 150 seconds is less than 1, we assume this asset is not likely to be used again; we will evict it and not continue to predict the following assets. Skip predicting all assets, reducing the time-consuming inference and increasing the efficiency of this algorithm in general.</p>
+<section id="implementation-of-proposed-fllu">
+<h4>3.3.3 Implementation of proposed FLLU<a class="headerlink" href="#implementation-of-proposed-fllu" title="Link to this heading"></a></h4>
+<p>In the case of FLLU eviction, the CDN will check the possibility of being used in the future for all the assets cached inside this CDN and evict the least likely to be used assets. Specifically, in the eviction stage, the fetch function first checks the current time as a window end time, and the window lasts for 150 seconds. Then, we will extract the 150 seconds before the window end time in the history data we captured; in this case, it is from user_600_hour_6_cs.uchicago.edu.har. Based on the 150-second history, we will predict the usage of this asset in the future 150 seconds. If the sum of all the prediction usage in the next 150 seconds is less than 1, we assume this asset is not likely to be used again; we will evict it and not continue to predict the following assets. Skip predicting all assets, reducing the time-consuming inference and increasing the efficiency of this algorithm in general.</p>
 <p>The hit rate for CDN with prediction in the end is around 85.71%.</p>
 </section>
 </section>
 </section>
-<section id="conclusion">
-<h2>5. Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading"></a></h2>
-<p>The hit rate increased from 84.30% to 85.71%; this proves the effectiveness of our algorithm. In a real-world scenario, this increase of 1.4% in hits rate will have a large impact on a wide scale and reduce the time costs for downloading assets from a distant data center.</p>
+<section id="analysis">
+<h2>4. Analysis<a class="headerlink" href="#analysis" title="Link to this heading"></a></h2>
+<p>We can see from the result above that FLLU does not provide any tangible improvements on top of LLU. We want to explore several possibilities on why this is the case</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>Correlation between least recently and lesser likely used</strong>: it is possible that if an asset is least recently used, it would also be lesser likely to be used. As FLLU aims to improve the edge case scenario of least recently used asset will actually be used soon, depending on the access pattern, this corner case might be too marginal to show substantial improvements.</p></li>
+<li><p><strong>FLLU, not LLU</strong>: originally, we planned to implement LLU instead of FLLU. For LLU, we wish to search through all the cached asset, compute their future probability score, and evict the asset with the smallest score. However, during our experiments and implementation, we found that this approach’s computational cost is prohibitively expensive and makes the algorithm infeasible. However, ignoring the prohibitive cost, it is possible that LLU would discover the global optimal asset to evict, improving the hit ratio.</p></li>
+<li><p><strong>Simplistic access pattern</strong>: as mentioned in the design section for trace generator, our simulated user behavior is not exactly smart. This simplistic access behavior might also contribute to the ineffectiveness of FLLU. For example, most of the asset exhibits a single peak.</p></li>
+</ul>
+</div></blockquote>
+<p>However, although the improvement is not substantial, we can see that predictive algorithm does manage to improve the hit ratio compared with LRU. Therefore, it is apparent that future information will help CDN cache performance, with degree depending on the algorithm implementation and access pattern.</p>
 </section>
 <section id="future-work">
-<h2>6. Future Work<a class="headerlink" href="#future-work" title="Link to this heading"></a></h2>
+<h2>5. Future Work<a class="headerlink" href="#future-work" title="Link to this heading"></a></h2>
 <p>This is a simulation based on random asset access, and the accessing pattern is different from human behaviors. In general, we assume human behaviors are more regular, easy-to-capture, and obvious preference behaviors. Those features make human behaviors less random and may provide better predictions.</p>
 <p>We simulated a CDN but did not really consider the time used to add-delete cached assets. Thus, this simulation is only an experimental product that is slightly distant from the real-world product.</p>
 <p>Also, the threshold of less than one access in the following 150 seconds is only a number manually decided. Different thresholds may lead to better performance, which well balances the time saved and used by prediction. Thus, in the future, a threshold selection is necessary by doing experiments with different thresholds under different dataset contexts.</p>
