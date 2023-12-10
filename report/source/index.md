@@ -79,4 +79,33 @@ We then qualitatively examine the model quality by inferring later data given pr
 
 PREDICTION GRAPHS
 
+### CDN Simulation
 
+STRUCTURE
+
+We initialized a CDN simulation structure with a size of 100 Mb and a hashmap to contain those assessed website assets. The total number of access requests and number of hits are stored for later hit rate calculation. 
+
+WITH NO PREDICTION
+
+We first use user_600_hour_6_cs.uchicago.edu.har as a test dataset to measure the CDN hit rate. This dataset starts at 2023-11-27 21:27:41, and we set it to end at 2023-11-27 23:27:41. In the case without prediction for cache eviction, we use the least recent use policy to evict the oldest accessed assets in the history. 
+
+The hit rate in the end is around 84.30%
+
+WITH PREDICTION
+
+In the case of eviction without prediction, the CDN will check the possibility of reusing all the assets cached inside this CDN and evict the least likely to be used assets. Specifically, in the eviction stage, the fetch function first checks the current time as a window end time, and the window lasts for 150 seconds. Then, we will extract the 150 seconds before the window end time in the history data we captured; in this case, it is from user_600_hour_6_cs.uchicago.edu.har. Based on the 150-second history, we will predict the usage of this asset in the future 150 seconds. If the sum of all the prediction usage in the next 150 seconds is less than 1, we assume this asset is not likely to be used again; we will evict it and not continue to predict the following assets. Skip predicting all assets, reducing the time-consuming inference and increasing the efficiency of this algorithm in general.
+
+
+The hit rate for CDN with prediction in the end is around 85.71%.
+
+**CONCLUSION**
+
+The hit rate increased from 84.30% to 85.71%; this proves the effectiveness of our algorithm. In a real-world scenario, this increase of 1.4% in hits rate will have a large impact on a wide scale and reduce the time costs for downloading assets from a distant data center.
+
+### FUTURE WORK
+
+This is a simulation based on random asset access, and the accessing pattern is different from human behaviors. In general, we assume human behaviors are more regular, easy-to-capture, and obvious preference behaviors. Those features make human behaviors less random and may provide better predictions. 
+
+We simulated a CDN but did not really consider the time used to add-delete cached assets. Thus, this simulation is only an experimental product that is slightly distant from the real-world product.
+
+Also, the threshold of less than one access in the following 150 seconds is only a number manually decided. Different thresholds may lead to better performance, which well balances the time saved and used by prediction. Thus, in the future, a threshold selection is necessary by doing experiments with different thresholds under different dataset contexts.
