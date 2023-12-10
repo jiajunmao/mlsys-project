@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document for Predicative Eviction for CDN Asset &mdash; Predictive Eviction for CDN Assets  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            Predictive Eviction for CDN Assets
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">Document for Predicative Eviction for CDN Asset</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#related-works">Related Works</a></li>
+<li><a class="reference internal" href="#least-likely-used-eviction">Least Likely Used Eviction</a></li>
+<li><a class="reference internal" href="#methodology">Methodology</a><ul>
+<li><a class="reference internal" href="#trace-generation">Trace Generation</a><ul>
+<li><a class="reference internal" href="#user-access-pattern">User Access Pattern</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#model-training">Model Training</a><ul>
+<li><a class="reference internal" href="#loss-function-design">Loss Function Design</a></li>
+<li><a class="reference internal" href="#training">Training</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Predictive Eviction for CDN Assets</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Document for Predicative Eviction for CDN Asset</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="document-for-predicative-eviction-for-cdn-asset">
+<h1>Document for Predicative Eviction for CDN Asset<a class="headerlink" href="#document-for-predicative-eviction-for-cdn-asset" title="Link to this heading"></a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Content Delivery Network (CDN) is a widely used technique to speed up page load, distribute data center traffic load to edge servers, and improve user experience browsing the web. However, like any other caches in the world, CDN can only be truly effective if the hit ratio is reasonably high. Multiple cache eviction policies are used in modern CDNs ranging from the traditional LRU to zoned-LRU with privileged zones. However, all of these algorithms are retrospective. For example, LRU uses a doubly-linked hashmap to keep track of the <strong>least recently</strong> used cache to evict.</p>
+<p>In this project, we experiment with the idea of <strong>predicative eviction</strong>. The method uses time series analysis on the past access traces to predict future access patterns before evicting them from the cache.</p>
+</section>
+<section id="related-works">
+<h2>Related Works<a class="headerlink" href="#related-works" title="Link to this heading"></a></h2>
+<p>A few attempts have been made at this topic. <strong>FILL</strong></p>
+</section>
+<section id="least-likely-used-eviction">
+<h2>Least Likely Used Eviction<a class="headerlink" href="#least-likely-used-eviction" title="Link to this heading"></a></h2>
+<p>At the core of the predicative eviction CDN is the LLU, which is a really simple idea. LRU evicts the asset that is <strong>least recently</strong> used. On the other hand, LLU evicts the asset that is <strong>least likely to be used in the future</strong>. This aims to eliminate the problem that there is some possibility that a least recently used cache will be used in the near future while not least recently used will not.</p>
+<p>We use LSTM to infer the access pattern of the next 2.5 minutes given the the access pattern in the past 5 minutes. We then compare the access pattern across all the cached asset, and then evict the asset with the lowest probability, regardless whether that asset has been recently used or not. We also multiply the probability with the size of the asset such that</p>
+</section>
+<section id="methodology">
+<h2>Methodology<a class="headerlink" href="#methodology" title="Link to this heading"></a></h2>
+<p>The project efforts are separated into three parts with their implementation details explained below.</p>
+<section id="trace-generation">
+<h3>Trace Generation<a class="headerlink" href="#trace-generation" title="Link to this heading"></a></h3>
+<p>We have realized from the start of the project that real-world CDN traces are hard to obtain if not possible. Therefore, we decided that we are going to complete the project on synthetic traces. Three tech stacks are used to capture network access traces</p>
+<ul class="simple">
+<li><p>Selenium: navigate the webpages and process HTML</p></li>
+<li><p>Browsermob-proxy: serve as the proxy between Selenium and browser driver to capture Http Archive Format(HAR), which contains traces to all the assets a webpage requests and loads upon visit</p></li>
+<li><p>A pub/sub architecture generator: we simulate concurrent user access to a website through a multi-threaded pub/sub architecture trace generator.</p></li>
+</ul>
+<p>The generator is implemented with the following psedocode</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fifo_queue</span> <span class="o">:=</span> <span class="p">[]</span>
+
+<span class="n">populate_queue</span><span class="p">(</span><span class="n">fifo_queue</span><span class="p">,</span> <span class="n">num_user</span><span class="p">)</span>
+
+<span class="n">foreach</span> <span class="n">num_worker</span><span class="p">:</span>
+    <span class="k">while</span> <span class="n">fifo_queue</span> <span class="ow">not</span> <span class="n">empty</span><span class="p">:</span>
+
+        <span class="n">event</span> <span class="o">:=</span> <span class="n">fifo_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="c1"># Visit webpage and generate HAR</span>
+        <span class="n">visit_website</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="c1"># Generate next event</span>
+        <span class="n">next_event</span> <span class="o">:=</span> <span class="n">gen_next_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+        <span class="n">fifo_queue</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">next_event</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We can then initialize the number worker to be something appropriate. <code class="docutils literal notranslate"><span class="pre">event</span></code> contains a few critical attributes such as the url that we want to visit, the current simulated timestamp, etc. It is important to note that the time is simulation not, <em>not</em> wall time. Number of user controls how many concurrent user access we are simulating.</p>
+<section id="user-access-pattern">
+<h4>User Access Pattern<a class="headerlink" href="#user-access-pattern" title="Link to this heading"></a></h4>
+<p>We also need to assume some access patterns for our users. Due to project time constraint, we can only manage to simulate simple user behaviors. The following statement defines the user behavior.</p>
+<p>User will start a browsing session. A browsing session consists of a series of bursty clicks. After each click, the user needs sometime to read through the newly loaded website. The intervals between the bursty clicks are modeled by $\mathcal{N}(1m,0.5m)$. The number of clicks in a session is modeled by $\text{rand}(1,10]$. After a each browsing session, the user will take a rest before starting the next browser session. The rest interval is modeled by $\mathcal{N}(40m,20m)$. A single user will continue to engage in these browsing sessions until the simulation mission time is reached (such as 5 hours).</p>
+<p>With the <code class="docutils literal notranslate"><span class="pre">num_user</span></code> parameter properly configured, we can then simulate concurrent user access behaviors with the above definition defining the actions of individual users. However, do note that this access pattern is incredibly naive and primitive, and if we want more realistic traces, we probably should consider using more complex rules and distributions than simple normal.</p>
+</section>
+</section>
+<section id="model-training">
+<h3>Model Training<a class="headerlink" href="#model-training" title="Link to this heading"></a></h3>
+<p>After the trace is generated, we perform a rolling window smoothing on the access frequency of each asset such that a recurrent model can learn meaningful weights than just outputting 0s. A rolling window size of 400 is used, and a selected sample of assets will have their smoothed access frequency shown in the graph below. The semi-transparent histographs in the background shows the actual non-smoothed access frequency while the the line shows smoothed frequency.</p>
+<p><strong>PUT GRAPH HERE</strong></p>
+<p>When using LSTM to predict time series, we must be mindful of the input and output window of the model. For example, if we let the LSTM uses the previous $x$ data points to predict $1$ following data point, the model will always tend to just return the value of the last data point, as that makes sense. Therefore, in order to let LSTM capture longer-range relations in the smoothed data, we decided that our LSTM model will use the previous 300 data points to predict the next 150 data points, which translates to using the access pattern in the previous 5 minutes to predict the access pattern in the following 2.5 minutes.</p>
+<p>Our model consists of two LSTM networks concatenated together to capture the temporal correlation in the data, and a single layer MLP with hidden size of 50, and a output layer of 150 as mentioned above. Since we wish the model to output a similar prediction compared to the ground truth data, MSE loss function is used.</p>
+<section id="loss-function-design">
+<h4>Loss Function Design<a class="headerlink" href="#loss-function-design" title="Link to this heading"></a></h4>
+<p>Through training the model we have discovered that sometimes the model have the tendency to output slightly negative values for assets that have a smoothed access frequency that is closer to 0, due to MSE loss’s property of being un-signed. Therefore, we have appended a new term to the loss function as follows
+$$
+L=MSE(y, \hat{y})+
+\begin{cases}
+0 &amp; len(\hat{y}&lt;0) = 0\
+1 &amp; len(\hat{y}&lt;0) &gt; 0
+\end{cases}
+$$
+Essentially, if <strong>any</strong> of the output value is negative, we penalize the model hard. This loss design proves to work well during training.</p>
+</section>
+<section id="training">
+<h4>Training<a class="headerlink" href="#training" title="Link to this heading"></a></h4>
+<p>We select 3 asset access frequency as the training data for the model, which consists to about 60,000 data points. We train the aforementioned LSTM model for 100 epochs and reached a loss value of 0.00045285.</p>
+<p>LOSS FUNCTION GRAPH</p>
+<p>We then qualitatively examine the model quality by inferring later data given previous ground truth, and we see that our trianed model is able to output correct predictions</p>
+<p>PREDICTION GRAPHS</p>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2023, Jiajun Mao, Jinghan Zeng, Yuqing Wang.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
