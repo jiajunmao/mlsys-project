@@ -21,7 +21,7 @@ We use LSTM to infer the access pattern of the next 2.5 minutes given the the ac
                 evict(asset)
 
 
-1. Methodology
+3. Methodology
 ############################
 The project efforts are separated into three parts with their implementation details explained below.
 
@@ -132,7 +132,7 @@ The hit rate for CDN with prediction in the end is around 85.71%.
 4. Analysis
 ##################
 
-We can see from the result above that FLLU does not provide any tangible improvements on top of LLU. We want to explore several possibilities on why this is the case
+We can see from the result above that FLLU does not provide any tangible improvements on top of LRU. We want to explore several possibilities on why this is the case
 
    - **Correlation between least recently and lesser likely used**: it is possible that if an asset is least recently used, it would also be lesser likely to be used. As FLLU aims to improve the edge case scenario of least recently used asset will actually be used soon, depending on the access pattern, this corner case might be too marginal to show substantial improvements.
    - **FLLU, not LLU**: originally, we planned to implement LLU instead of FLLU. For LLU, we wish to search through all the cached asset, compute their future probability score, and evict the asset with the smallest score. However, during our experiments and implementation, we found that this approach's computational cost is prohibitively expensive and makes the algorithm infeasible. However, ignoring the prohibitive cost, it is possible that LLU would discover the global optimal asset to evict, improving the hit ratio.
